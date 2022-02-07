@@ -4,9 +4,9 @@ FROM [Portfolio Project]..CovidDeaths
 ORDER BY 3,4
 
 
-----SELECT *
-----FROM [Portfolio Project]..CovidVaccinations
-----ORDER BY 3,4
+SELECT *
+FROM [Portfolio Project]..CovidVaccinations
+ORDER BY 3,4
 
 --Select Data we are using.
 
