@@ -174,3 +174,71 @@ WHERE dea.continent IS NOT NULL AND vac.new_vaccinations IS NOT NULL AND dea.loc
 Select *
 FROM VaxDosesGivenUS
 
+--Vac Data Exploration
+Select vac.date, vac.positive_rate, vac.life_expectancy, dea.new_cases, dea.population
+FROM [Portfolio Project]..CovidVaccinations vac
+JOIN [Portfolio Project]..CovidDeaths dea
+	ON vac.location = dea.location
+Order by vac.date
+
+--Infection Rate in US Before and after Vaccinations
+Select vac.date, vac.location, dea.population, vac.new_vaccinations
+, cast(dea.new_cases as bigint)/population*100 as InfectionRate
+FROM [Portfolio Project]..CovidVaccinations vac
+JOIN [Portfolio Project]..CovidDeaths dea
+	ON vac.location = dea.location
+	AND vac.date = dea.date
+WHERE vac.location LIKE '%state%'
+Order by vac.date
+
+Select vac.date, vac.location, dea.population, vac.new_vaccinations, dea.new_cases, dea.new_deaths
+, cast(dea.new_deaths as bigint)/dea.new_cases*100 as MortalityRate
+, AVG(cast(MortRateUS as bigint)) OVER (Partition by dea.location Order BY dea.location, dea.date) as AvgMortalityRate
+FROM [Portfolio Project]..CovidVaccinations vac
+JOIN [Portfolio Project]..CovidDeaths dea
+	ON vac.location = dea.location
+	AND vac.date = dea.date
+WHERE vac.location LIKE '%state%'
+Order by vac.date
+
+--CTE for US mortality rate, for practice
+WITH MortRateUS(location, new_cases, new_deaths, MortalityRate)
+AS
+(
+SELECT location, new_cases, new_deaths
+, cast(new_deaths as bigint)/new_cases*100 as MortalityRate
+FROM [Portfolio Project]..CovidDeaths
+WHERE location LIKE '%states%'
+
+)
+Select vac.date, vac.location, dea.population, vac.new_vaccinations, dea.new_cases, dea.new_deaths,
+, cast(dea.new_deaths as bigint)/dea.new_cases*100 as MortalityRate
+, AVG(cast(MortRateUS as bigint)) OVER (Partition by dea.location Order BY dea.location, dea.date) as AvgMortalityRate
+FROM [Portfolio Project]..CovidVaccinations vac
+JOIN [Portfolio Project]..CovidDeaths dea
+	ON vac.location = dea.location
+	AND vac.date = dea.date
+WHERE vac.location LIKE '%state%'
+Order by vac.date
+
+-- ICU Patients in US pre vax
+SELECT dea.date, dea.location, dea.icu_patients, new_cases
+, icu_patients/new_cases*100 as ICUPercent
+FROM [Portfolio Project]..CovidVaccinations vac
+JOIN [Portfolio Project]..CovidDeaths dea
+	ON vac.location = dea.location
+	AND vac.date = dea.date
+WHERE dea.location LIKE '%states%'
+AND dea.date >'7/14/2020' AND dea.date < '12/14/2020'
+ORDER BY date
+
+--ICU Patients in US post vax
+SELECT dea.date, dea.location, dea.icu_patients, new_cases
+, icu_patients/new_cases*100 as ICUPercent
+FROM [Portfolio Project]..CovidVaccinations vac
+JOIN [Portfolio Project]..CovidDeaths dea
+	ON vac.location = dea.location
+	AND vac.date = dea.date
+WHERE dea.location LIKE '%states%'
+AND dea.date > '12/14/2020'
+ORDER BY date
